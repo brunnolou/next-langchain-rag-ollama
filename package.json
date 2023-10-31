@@ -9,8 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@qdrant/js-client-rest": "^1.6.0",
+    "@xenova/transformers": "^2.7.0",
     "ai": "2.2.16",
-    "langchain": "^0.0.129",
+    "encoding": "^0.1.13",
+    "langchain": "^0.0.171",
     "next": "13.4.12",
     "react": "18.2.0",
     "react-dom": "^18.2.0"
