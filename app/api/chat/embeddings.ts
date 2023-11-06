@@ -1,5 +1,19 @@
-import { HuggingFaceTransformersEmbeddings } from "langchain/embeddings/hf_transformers";
+import { pipeline, env } from "@xenova/transformers";
 
-export const embeddings = new HuggingFaceTransformersEmbeddings({
-  modelName: "Xenova/gte-small",
-});
+import path from "path";
+
+env.cacheDir = path.join(process.cwd(), "models");
+
+export async function getEmbeddings(query: string) {
+  const featureExtraction = await pipeline(
+    "feature-extraction",
+    "Xenova/gte-small"
+  );
+
+  const { data: embeddings } = await featureExtraction(query, {
+    pooling: "mean",
+    normalize: true,
+  });
+
+  return Array.from(embeddings) as number[];
+}

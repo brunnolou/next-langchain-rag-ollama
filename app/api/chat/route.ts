@@ -1,95 +1,84 @@
-import {
-  StreamingTextResponse,
-  Message,
-  LangChainStream,
-  streamToResponse,
-} from "ai";
-import { AIMessage, HumanMessage } from "langchain/schema";
+import { StreamingTextResponse, Message } from "ai";
+import { AIMessage, HumanMessage, SystemMessage } from "langchain/schema";
 import { ChatOllama } from "langchain/chat_models/ollama";
-import {
-  BytesOutputParser,
-  StringOutputParser,
-} from "langchain/schema/output_parser";
-import { RunnableSequence } from "langchain/schema/runnable";
-import { memory } from "./chat-context";
-import { performQuestionAnswering } from "./retrival-qa";
-import { getQdrantRetriever } from "./vector-store";
-import { NextResponse } from "next/server";
+import { BytesOutputParser } from "langchain/schema/output_parser";
+import { searchVectorDB } from "./vector-db";
 
-// export const runtime = "edge";
-
-export async function POST(req: Request, res: NextResponse) {
+export async function POST(req: Request) {
   const { messages } = (await req.json()) as { messages: Message[] };
 
-  const retriever = await getQdrantRetriever();
-  // const { stream, handlers, writer } = LangChainStream();
-
-  const chain = RunnableSequence.from([
-    {
-      // Pipe the question through unchanged
-      question: (input: { question: string }) => input.question,
-      // Fetch the chat history, and return the history or null if not present
-      chatHistory: async () => {
-        const savedMemory = await memory.loadMemoryVariables({});
-        const hasHistory = savedMemory.chatHistory.length > 0;
-        return hasHistory ? savedMemory.chatHistory : null;
-      },
-      // Fetch relevant context based on the question
-      context: async (input: { question: string }) => {
-        const docs = await retriever.getRelevantDocuments(input.question);
-        console.log("docs: ", docs);
-        return docs;
-      },
-    },
-    performQuestionAnswering,
-    new BytesOutputParser(),
-    // [handlers],
-  ]);
-
-  // const parser = new BytesOutputParser();
-  const parser = new StringOutputParser();
-  const { stream, handlers } = LangChainStream({
-    onToken(token) {
-      console.log("token: ", token);
-    },
+  const contextSearchModel = new ChatOllama({
+    baseUrl: process.env.OLLAMA_BASE_URL,
+    model: process.env.OLLAMA_MODEL_NAME,
+    temperature: 0,
   });
 
-  const readableStream = await chain.stream(
-    {
-      question: messages[messages.length - 1].content,
-    },
-    // [handlers],
-    {
-      callbacks: [
-        {
-          handleRetrieverEnd(documents, runId, parentRunId, tags) {
-            console.log("documents, runId: ", documents, runId);
-          },
-          ...handlers,
-          handleLLMNewToken(token, idx, runId, parentRunId, tags, fields) {
-            console.log("token: ", token, idx);
-            return handlers.handleLLMNewToken(token);
-          },
-        },
-      ],
-    }
+  const chatModel = new ChatOllama({
+    baseUrl: process.env.OLLAMA_BASE_URL,
+    model: process.env.OLLAMA_MODEL_NAME,
+    temperature: 0.5,
+  });
+
+  // Extract a standalone question to later query the vector db.
+  const answer = await contextSearchModel.call(
+    parseMessages([
+      ...messages,
+      {
+        id: "0",
+        role: "system",
+        content: `Given the following conversation and a follow-up question, rephrase the follow-up question to be a standalone question. Reply only with the question, nothing else.
+----------
+Standalone question:`,
+      },
+    ])
   );
+  console.log("====================================");
+  console.log("Standalone question:", answer.content);
 
-  // console.log("stream: ", stream);
+  let systemInstructions = "";
 
-  // const stream = await chain
-  //   .pipe(parser)
-  //   .stream(
-  //     (messages as Message[]).map((m) =>
-  //       m.role == "user"
-  //         ? new HumanMessage(m.content)
-  //         : new AIMessage(m.content)
-  //     ),
-  //   );
+  // Get the standalone question and search the vector db.
+  const context = await searchVectorDB(answer.content, 3);
 
-  // return new StreamingTextResponse(readableStream);
+  systemInstructions = `You are a legal assistant expert on the Swiss Code of Obligations.
+Base you answers exclusively on the provided context from the Swiss Code of Obligations.
+Ignore
+Mention the article(s) and the source link(s) that you based you answer.
+----
 
-  return new StreamingTextResponse(readableStream, {
-    headers: { "x-sources": "sources" },
-  });
+CONTEXT:
+${context
+  .map(
+    (x) => `
+## ${x?.payload?.article}
+${x?.payload?.content}
+
+--
+
+[Source link](${x?.payload?.link})
+`
+  )
+  .join("----\n")}`;
+
+  // Call and stream the LLM with the instructions, context and user messages.
+  const stream = await chatModel
+    .pipe(new BytesOutputParser())
+    .stream(
+      parseMessages([
+        { id: "instructions", role: "system", content: systemInstructions },
+        ...messages,
+      ])
+    );
+
+  return new StreamingTextResponse(stream);
+}
+
+function parseMessages(messages: Message[]) {
+  return messages.map((m) =>
+    m.role == "user"
+      ? new HumanMessage(m.content)
+      : m.role == "system"
+      ? new SystemMessage(m.content)
+      : new AIMessage(m.content)
+  );
 }
