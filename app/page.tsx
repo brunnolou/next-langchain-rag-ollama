@@ -1,17 +1,34 @@
-'use client';
+"use client";
 
-import { useChat } from 'ai/react';
+import { useMemo } from "react";
+import { useChat } from "ai/react";
+
+type DataType = {
+  context: any[];
+};
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
+  const { messages, data, input, handleInputChange, handleSubmit } = useChat();
+
+  const parsedData = useMemo<DataType[]>(
+    () => data?.flatMap((x: string) => [null, JSON.parse(x)]),
+    [data]
+  );
 
   return (
     <div className="mx-auto w-full max-w-md py-24 flex flex-col stretch">
       {messages.length > 0
-        ? messages.map(m => (
-            <div key={m.id} className="whitespace-pre-wrap mb-4">
-              <b>{m.role === 'user' ? 'User: ' : 'AI: '}</b>
-              {m.content}
+        ? messages.map((m, i) => (
+            <div key={m.id} className="flex flex-col mb-6">
+              <b>{m.role === "user" ? "User: " : "AI: "}</b>
+
+              <small className="text-gray-500">
+                {parsedData?.[i]?.context
+                  ?.map(({ payload }) => payload.article)
+                  .join(", ")}
+              </small>
+
+              <p className="whitespace-pre-wrap">{m.content.trim()}</p>
             </div>
           ))
         : null}
