@@ -1,4 +1,4 @@
-# An AI Swiss legal assistant
+# AI Swiss legal assistant
 
 This is a simple conversational-ui RAG (retrieval augmented generation) based on the Swiss Code of Obligations.
 
