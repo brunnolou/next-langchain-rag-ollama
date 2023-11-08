@@ -1,6 +1,10 @@
-# RAG – Vercel AI SDK, Next.js, LangChain, Ollama Chat Example
+# An AI Swiss legal assistant
 
-This example shows how to use the [Vercel AI SDK](https://sdk.vercel.ai/docs) with [Next.js](https://nextjs.org/), [LangChain](https://js.langchain.com), and [Ollama](https://ollama.ai) to create a ChatGPT-like AI-powered streaming chat bot.
+This is a simple conversational-ui RAG (retrieval augmented generation) based on the Swiss Code of Obligations.
+
+It uses Vercel AI SDK, Next.js, LangChain, Qdrant Vector database, and Ollama.
+
+This example shows how to use the [Vercel AI SDK](https://sdk.vercel.ai/docs) with [Next.js](https://nextjs.org/), [LangChain](https://js.langchain.com), and [Ollama](https://ollama.ai) to create a ChatGPT-like AI-powered streaming chatbot.
 
 ## Deploy your own
 
@@ -71,7 +75,7 @@ curl -X POST 'http://localhost:6333/collections/swiss-or/snapshots/upload' \
 
 To learn more about LangChain, OpenAI, Next.js, and the Vercel AI SDK take a look at the following resources:
 
-- [Vercel AI SDK docs](https://sdk.vercel.ai/docs) - learn mode about the Vercel AI SDK
+- [Vercel AI SDK docs](https://sdk.vercel.ai/docs) - learn more about the Vercel AI SDK
 - [LangChain Documentation](https://js.langchain.com/docs) - learn about LangChain
 - [Ollama](https://ollama.ai) - learn about Ollama features, models, and API.
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
