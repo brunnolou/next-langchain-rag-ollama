@@ -37,9 +37,8 @@ To run the example locally you need to:
 ## Setup Qdrant vector database
 
 1. Run `docker pull qdrant/qdrant` and `docker run -p 6333:6333 qdrant/qdrant`
-2. Open the dashboard (`http://localhost:6333/dashboard`)
-3. Open up the console.
-4. Create a new collection
+2. Open the console dashboard [`localhost:6333/dashboard#/console`](http://localhost:6333/dashboard#/console).
+3. Create a new collection running this:
 
 ```
 PUT collections/swiss-or
@@ -51,9 +50,9 @@ PUT collections/swiss-or
 }
 ```
 
-8. Download the [snapshot file](https://huggingface.co/datasets/brunnolou/swiss-code-of-obligations/resolve/main/swiss-code-of-obligations-articles-gte-small-2023-10-18-12-13-25_qdrant-v1-6-1.snapshot.zip)
-9. Unzip the file using the terminal (⚠️ **_not with Finder on Mac_** ⚠️) with `unzip ...`
-10. Upload the file using the following command. Adapt the fields accordingly and run it from the same directory, as where you snapshot lies.
+4. Download the [snapshot file](https://huggingface.co/datasets/brunnolou/swiss-code-of-obligations/resolve/main/swiss-code-of-obligations-articles-gte-small-2023-10-18-12-13-25_qdrant-v1-6-1.snapshot.zip)
+5. Unzip the file using the terminal (⚠️ **_not with Finder on Mac_** ⚠️) with `unzip ...`
+6. Upload the file using the following command. Adapt the fields accordingly and run it from the same directory, as where your snapshot lies.
 
 ```
 curl -X POST 'http://localhost:6333/collections/swiss-or/snapshots/upload' \
