@@ -11,7 +11,7 @@
   "dependencies": {
     "@qdrant/js-client-rest": "^1.6.0",
     "@xenova/transformers": "^2.7.0",
-    "ai": "2.2.16",
+    "ai": "^2.2.21",
     "encoding": "^0.1.13",
     "langchain": "^0.0.171",
     "next": "13.4.12",
